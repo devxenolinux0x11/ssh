@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Set up SSH
+        uses: fastai/workflows/ssh@master
+        with:
+          ssh_key: ${{ secrets.SSH_KEY }}
+          key_file: id_ecdsa
+
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Install Google Chrome
+        run: |
+          $chromeInstallerPath = "$env:TEMP\chrome_installer.exe"
+          Invoke-WebRequest -Uri "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile $chromeInstallerPath
+          Start-Process -FilePath $chromeInstallerPath -ArgumentList "/silent /install" -NoNewWindow -Wait
+        shell: pwsh
+
+      - name: Install Chrome Remote Desktop Host
+        run: |
+          $crdInstallerPath = "$env:TEMP\chromeremotedesktophost.msi"
+          Invoke-WebRequest -Uri "https://dl.google.com/tag/s/appguid%3D%7B8A69D345-D564-463C-AFF1-A69D9E530F96%7D%26iid%3D%7BD63E028B-3124-52D4-F26E-813F71CF27B5%7D%26lang%3Den%26browser%3D4%26usagestats%3D0%26appname%3DChrome%2520Remote%2520Desktop%2520Host%26needsadmin%3Dtrue%26ap%3Dx64-stable/update2/installers/ChromeRemoteDesktopHost.msi" -OutFile $crdInstallerPath
+          Start-Process -FilePath msiexec.exe -ArgumentList "/i $crdInstallerPath /quiet /norestart" -NoNewWindow -Wait
+        shell: pwsh
+
+      - name: Set up Chrome Remote Desktop
+        run: |
+          $crdHostSetupPath = "$env:ProgramFiles(x86)\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe"
+          $crdCode = "4/0AcvDMrD40oXQBv4tx_gY3qKawfQFkPcbMtY_4nXZgOjnxI7yIYYId4ECmOZEC18psjv9pw"  # Use GitHub secrets for the setup code
+          $redirectUrl = "https://remotedesktop.google.com/_/oauthredirect"
+          Start-Process -FilePath $crdHostSetupPath -ArgumentList "--code=$crdCode --redirect-url=$redirectUrl --name=$env:COMPUTERNAME" -NoNewWindow -Wait
+        shell: pwsh
