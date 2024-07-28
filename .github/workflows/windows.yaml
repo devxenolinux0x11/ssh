@@ -17,26 +17,5 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v3
 
-      - name: Install Google Chrome
-        run: |
-          $chromeInstallerPath = "$env:TEMP\chrome_installer.exe"
-          Invoke-WebRequest -Uri "https://dl.google.com/chrome/install/latest/chrome_installer.exe" -OutFile $chromeInstallerPath
-          Start-Process -FilePath $chromeInstallerPath -ArgumentList "/silent /install" -NoNewWindow -Wait
-        shell: pwsh
-
-      - name: Install Chrome Remote Desktop Host
-        run: |
-          $crdInstallerPath = "$env:TEMP\chromeremotedesktophost.msi"
-          Invoke-WebRequest -Uri "https://dl.google.com/edgedl/chrome-remote-desktop/chrome_remote_desktop.msi" -OutFile $crdInstallerPath
-          Start-Process -FilePath msiexec.exe -ArgumentList "/i $crdInstallerPath /quiet /norestart" -NoNewWindow -Wait
-        shell: pwsh
-
-      - name: Set up Chrome Remote Desktop
-        run: |
-          $crdHostSetupPath = "$env:ProgramFiles(x86)\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe"
-          $crdCode = "${{ secrets.CRD_CODE }}"  # Use GitHub secrets for the setup code
-          $redirectUrl = "https://remotedesktop.google.com/_/oauthredirect"
-          Start-Process -FilePath $crdHostSetupPath -ArgumentList "--code=$crdCode --redirect-url=$redirectUrl --name=$env:COMPUTERNAME" -NoNewWindow -Wait
-        shell: pwsh
-
-    
+      - name: Setup Debug Session
+        uses: mxschmitt/action-tmate@master
